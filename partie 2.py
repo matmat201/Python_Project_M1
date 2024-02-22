@@ -17,19 +17,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 import openpyxl as op
 
-
-    
 ############################################################################## 
-def plot_photoel(ax, Energie, Photoel):
-    ax.plot(Energie, Photoel, label="Effet photoélectrique")
-
-def plot_compton(ax, Energie, Diff_c):
-    ax.plot(Energie, Diff_c, label="Effet Compton")
-
-def plot_creation_paire(ax, Energie, CP_nuc, CP_el):
-    ax.plot(Energie, CP_nuc, label="Création de paire nucléaire")
-    ax.plot(Energie, CP_el, label="Création de paire électronique")
-
 def trace_alu():
     # Lecture des datas
     book = op.load_workbook('bdd_photons.xlsx')
@@ -41,44 +29,43 @@ def trace_alu():
     CP_nuc = []
     CP_el = []
 
-    for i in range(4, sheet.max_row + 1):  # on sait que les données commence a la 4ieme ligne
-        Energie.append(float(sheet.cell(row=i, column=1).value))
-        Diff_c.append(float(sheet.cell(row=i, column=2).value))
-        Photoel.append(float(sheet.cell(row=i, column=3).value))
-        CP_nuc.append(float(sheet.cell(row=i, column=4).value))
-        CP_el.append(float(sheet.cell(row=i, column=5).value))
+    for i in range(4,sheet.max_row+1):                                  #on sait que les données commence a la 4ieme ligne
+        Energie.append(float(sheet.cell(row = i, column = 1).value))
+        Diff_c.append(float(sheet.cell(row = i, column = 2).value))
+        Photoel.append(float(sheet.cell(row = i, column = 3).value))
+        CP_nuc.append(float(sheet.cell(row = i, column = 4).value))
+        CP_el.append(float(sheet.cell(row = i, column = 5).value))
 
-    fig.clear()
-    ax = fig.add_subplot(1, 1, 1)
-
+    
+    fig.clear() #On efface la zone graphique
+    fig.canvas.draw() #On efface le canvas vide
+    ax = fig.add_subplot(1,1,1) #graphe pleine page du canvas    
+    ax.legend()
     ax.set_title("Evolution coeff atténuation massique de l'Aluminium")
     ax.set_xlabel("Energie")
     ax.set_ylabel("tau(cm2/g)")
     ax.set_xscale('log')
     ax.set_yscale('log')
-
-    ax.set_xlim(min(Energie), max(Energie))
-    ax.set_ylim(min(Photoel), max(Photoel))
-
-    ax.grid(which="major", axis='y', linestyle='--')
-    ax.grid(which="both", axis='x', linestyle='--')
-
+    
+    ax.set_xlim(min(Energie),max(Energie))
+    ax.set_ylim(min(Photoel),max(Photoel))
+    
+    ax.grid(which = "major", axis='y', linestyle = '--')
+    ax.grid(which = "both", axis='x', linestyle = '--')
+    
     if PE_ctrl.get() == 1:
-        plot_photoel(ax, Energie, Photoel)
-
+        ax.plot(Energie,Photoel,label="Effet photoélectrique")
+        
     if Comp_ctrl.get() == 1:
-        plot_compton(ax, Energie, Diff_c)
-
+        ax.plot(Energie,Diff_c,label="Effet Compton")
+        
     if CP_ctrl.get() == 1:
-        plot_creation_paire(ax, Energie, CP_nuc, CP_el)
-
+        ax.plot(Energie,CP_nuc,label="Création de paire nucléaire")
+        ax.plot(Energie,CP_el,label="Création de paire électronique")
     ax.legend()
     fig.canvas.draw()
+
     book.save('bdd_photons.xlsx')
-
-# Le reste de votre code reste inchangé...
-
-
 
 ##############################################################################
 def effacer():
