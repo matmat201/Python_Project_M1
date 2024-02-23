@@ -44,6 +44,78 @@ def update_value_nrj(value, is_max=False):
         real_value = scale_to_realmin(curseur_nrj_min.get())
         label_valeur_nrj_min.config(text=f"  Valeur minimal de l'energie : {real_value:.4e}  ")
 ##############################################################################
+#fonction qui recupere le choix dans la combobox        
+def choix_mat_fct(event):
+    global mat_choisi
+    mat_choisi = Menu_deroulant.get()
+    print("Élément sélectionné :", mat_choisi)
+##############################################################################    
+def trace():
+    # Lecture des datas
+    book = op.load_workbook('bdd_photons_all_datas.xlsx')
+    sheet = book.get_sheet_by_name(mat_choisi)
+
+    Energie = []
+    Diff_ela = []
+    Diff_c = []
+    Photoel = []
+    CP_nuc = []
+    CP_el = []
+    Tot_w_ela = []
+    Tot_wo_ela = []
+
+    for i in range(4,sheet.max_row+1):                                  #on sait que les données commence a la 4ieme ligne
+        Energie.append(float(sheet.cell(row = i, column = 1).value))
+        Diff_ela.append(float(sheet.cell(row = i, column = 2).value))
+        Diff_c.append(float(sheet.cell(row = i, column = 3).value))
+        Photoel.append(float(sheet.cell(row = i, column = 4).value))
+        CP_nuc.append(float(sheet.cell(row = i, column = 5).value))
+        CP_el.append(float(sheet.cell(row = i, column = 6).value))
+        Tot_w_ela.append(float(sheet.cell(row = i, column = 7).value))
+        Tot_wo_ela.append(float(sheet.cell(row = i, column = 8).value))
+
+    fig.clear() #On efface la zone graphique
+    fig.canvas.draw() #On efface le canvas vide
+    ax = fig.add_subplot(1,1,1) #graphe pleine page du canvas    
+    ax.legend()
+    ax.set_title(f"Evolution coeff atténuation massique pour {mat_choisi}")
+    ax.set_xlabel("Energie")
+    ax.set_ylabel("tau(cm2/g)")
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    
+    ax.set_xlim(min(Energie),max(Energie))
+    ax.set_ylim(min(Photoel),max(Photoel))
+    
+    ax.grid(which = "major", axis='y', linestyle = '--')
+    ax.grid(which = "both", axis='x', linestyle = '--')
+    
+    if PE_ctrl.get() == 1:
+        ax.plot(Energie,Photoel,label="Effet photoélectrique")
+    
+    if Ray_ctrl.get() == 1:
+        ax.plot(Energie,Diff_ela,label="Diffusion Rayleigh")
+        
+    if Comp_ctrl.get() == 1:
+        ax.plot(Energie,Diff_c,label="Effet Compton")
+        
+    if CPn_ctrl.get() == 1:
+        ax.plot(Energie,CP_nuc,label="Création de paire nucléaire")
+        
+    if CPe_ctrl.get() == 1:
+        ax.plot(Energie,CP_el,label="Création de paire électronique")
+        
+    if TotSansRay_ctrl.get() == 1:
+        ax.plot(Energie,Tot_wo_ela,label="Atténuation sans diffusion Rayleigh")
+            
+    if TotAvecRay_ctrl.get() == 1:
+        ax.plot(Energie,Tot_w_ela,label="Atténuation avec diffusion Rayleigh")
+        
+    ax.legend()
+    fig.canvas.draw()
+
+    book.save('bdd_photons_all_datas.xlsx')
+##############################################################################
 def reset():
     fig.clear()
     fig.canvas.draw()
@@ -64,6 +136,9 @@ Choix_mat = Label(fenetre, text="Choisir un élément Chimique :")
 list_materiaux = ["Aluminium", "Plomb", "Cobalt", "Cuivre"]
 Menu_deroulant = ttk.Combobox(fenetre, values=list_materiaux)
 Menu_deroulant.current(0)
+
+#utilisation menu deroulant
+Menu_deroulant.bind("<<ComboboxSelected>>", choix_mat_fct)
 
 #placement menu deroulant
 Choix_mat.grid(row=0, column=0, sticky='w',padx=50)
@@ -161,7 +236,7 @@ graph = FigureCanvasTkAgg(fig, master=fenetre)
 canvas = graph.get_tk_widget() #Ajoute une zone graphe
 
 #bouton fonction
-Tracer_courbe_B = Button(fenetre, text="Tracer les courbes")
+Tracer_courbe_B = Button(fenetre, text="Tracer les courbes",command=trace)
 
 Reinitialis_B = Button(fenetre, text="Réinitialiser",command=reset)
 
