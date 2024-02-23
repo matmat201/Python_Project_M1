@@ -24,7 +24,7 @@ def scale_to_realmin(value):
     return value * 1e-4
 
 def scale_to_realmax(value):
-    return value * 1e3
+    return value * 1e2
 ##############################################################################
 # Fonction pour mettre à jour l'affichage de la valeur réelle de tau
 def update_value_tau(value, is_max=False):
@@ -84,8 +84,8 @@ def trace():
     ax.set_xscale('log')
     ax.set_yscale('log')
     
-    ax.set_xlim(min(Energie),max(Energie))
-    ax.set_ylim(min(Photoel),max(Photoel))
+    ax.set_xlim(scale_to_realmin(curseur_nrj_min.get()),scale_to_realmax(curseur_nrj_max.get()))
+    ax.set_ylim(scale_to_realmin(curseur_tau_min.get()),scale_to_realmax(curseur_tau_max.get()))
     
     ax.grid(which = "major", axis='y', linestyle = '--')
     ax.grid(which = "both", axis='x', linestyle = '--')
@@ -124,6 +124,8 @@ def reset():
 #Programme principal
 ##############
 
+mat_choisi = "Aluminium"
+
 #création d'une fenêtre tkinter
 fenetre = Tk()
 #fenetre.geometry("800x500")
@@ -152,6 +154,12 @@ CPn_ctrl = IntVar()
 CPe_ctrl = IntVar()
 TotSansRay_ctrl = IntVar()
 TotAvecRay_ctrl = IntVar()
+
+PE_ctrl.set(1)
+Comp_ctrl.set(1)
+CPn_ctrl.set(1)
+CPe_ctrl.set(1)
+TotSansRay_ctrl.set(1)
 
 #Creation du cadre selec courbe
 cadre_courbe = Frame(fenetre, borderwidth=2, relief="raised")
@@ -195,7 +203,7 @@ label_valeur_tau_min.pack()
 
 curseur_tau_max = Scale(cadre_tau, from_=1, to=100, resolution=0.01, orient=HORIZONTAL, command=lambda value: update_value_tau(value, is_max=True))
 label_valeur_tau_max = Label(cadre_tau, text="Valeur minimal de tau : ")
-curseur_tau_max.set(1)
+curseur_tau_max.set(100)
 curseur_tau_max.pack()
 label_valeur_tau_max.pack()
 
@@ -213,13 +221,13 @@ titre_cadre3.grid(row=2,column=1,sticky="nw",padx=15,pady=5)
 #creation des sliders
 curseur_nrj_min = Scale(cadre_nrj, from_=1, to=100, resolution=0.01, orient=HORIZONTAL, command=lambda value: update_value_nrj(value, is_max=False))
 label_valeur_nrj_min = Label(cadre_nrj, text="Valeur minimal de l'énergie : ")
-curseur_nrj_min.set(1)
+curseur_nrj_min.set(10)
 curseur_nrj_min.pack()
 label_valeur_nrj_min.pack()
 
 curseur_nrj_max = Scale(cadre_nrj, from_=1, to=100, resolution=0.01, orient=HORIZONTAL, command=lambda value: update_value_nrj(value, is_max=True))
 label_valeur_nrj_max = Label(cadre_nrj, text="Valeur minimal de l'énergie : ")
-curseur_nrj_max.set(1)
+curseur_nrj_max.set(100)
 curseur_nrj_max.pack()
 label_valeur_nrj_max.pack()
 
