@@ -117,7 +117,34 @@ def trace():
 ##############################################################################
 def reset():
     fig.clear()
+    ax = fig.add_subplot(1,1,1)
+    ax.legend()
+    ax.set_title(f"Evolution coeff atténuation massique pour {mat_choisi}")
+    ax.set_xlabel("Energie")
+    ax.set_ylabel("tau(cm2/g)")
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_xlim(scale_to_realmin(curseur_nrj_min.get()),scale_to_realmax(curseur_nrj_max.get()))
+    ax.set_ylim(scale_to_realmin(curseur_tau_min.get()),scale_to_realmax(curseur_tau_max.get()))
+    ax.grid(which = "major", axis='y', linestyle = '--')
+    ax.grid(which = "both", axis='x', linestyle = '--')
     fig.canvas.draw()
+    
+    Menu_deroulant.set(list_materiaux[0])
+    choix_mat_fct(None)
+    
+    PE_ctrl.set(0)
+    Ray_ctrl.set(0)
+    Comp_ctrl.set(0)
+    CPn_ctrl.set(0)
+    CPe_ctrl.set(0)
+    TotSansRay_ctrl.set(0)
+    TotAvecRay_ctrl.set(0)
+    
+    curseur_tau_min.set(1)
+    curseur_tau_max.set(100)
+    curseur_nrj_min.set(10)
+    curseur_nrj_max.set(100)
 
 ##############
 #Programme principal
@@ -194,7 +221,7 @@ TotSansRay_chk.grid(row=6, sticky="w",pady=5)
 TotAvecRay_chk.grid(row=7, sticky="w",pady=5)
 
 #Placement du cadre selec courbe
-cadre_courbe.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")  # Assurez-vous que le cadre s'étend dans toutes les directions
+cadre_courbe.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
 
 #creation cadre val tau
 cadre_tau = CTkFrame(fenetre)
@@ -218,7 +245,7 @@ update_value_tau(curseur_tau_min.get(), is_max=False)
 update_value_tau(curseur_tau_max.get(), is_max=True)
 
 #placement du cadre tau
-cadre_tau.grid(row=2, column=0, padx=10, pady=10, sticky="nsew")  # Assurez-vous que le cadre s'étend dans toutes les directions
+cadre_tau.grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
 
 #creation cadre val energie
 cadre_nrj = CTkFrame(fenetre)
@@ -242,7 +269,7 @@ update_value_nrj(curseur_nrj_min.get(), is_max=False)
 update_value_nrj(curseur_nrj_max.get(), is_max=True)
 
 #placement du cadre energie
-cadre_nrj.grid(row=2, column=1, padx=10, pady=10, sticky="nsew")  # Assurez-vous que le cadre s'étend dans toutes les directions
+cadre_nrj.grid(row=2, column=1, padx=10, pady=10, sticky="nsew")
 
 #Canva
 fig = Figure(figsize=(6, 6))
@@ -260,7 +287,21 @@ Tracer_courbe_B.grid(row=3, column=0)
 Reinitialis_B.grid(row=3,column=1)
 Quitter_B.grid(row=3,column=2)
 
-canvas.grid(row=1, column=2, rowspan=2, padx=10, pady=10, sticky="nsew")  # Assurez-vous que le canevas s'étend dans toutes les directions
+canvas.grid(row=1, column=2, rowspan=2, padx=10, pady=10, sticky="nsew")
+
+#cadre des nouvelles fonctions#Creation du cadre selec courbe
+cadre_nouv = CTkFrame(fenetre)
+titre_cadre4 = CTkLabel(cadre_nouv, text="Nouvelles fonctions implémentée :")
+titre_cadre4.grid(row=0,sticky="nw",padx=25,pady=5)
+cadre_nouv.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
+
+
+Aide_B = CTkButton(cadre_nouv, text="Documentation",command=fenetre.destroy).grid(row=1,pady=5)
+Coef_B = CTkButton(cadre_nouv, text="Extraction Tau",command=fenetre.destroy).grid(row=2,pady=5)
+Section_B = CTkButton(cadre_nouv, text="Calcul Section Efficace",command=fenetre.destroy).grid(row=3,pady=5)
+Unite_B = CTkButton(cadre_nouv, text="Changement unitée",command=fenetre.destroy).grid(row=4,pady=5)
+Save_B = CTkButton(cadre_nouv, text="Sauvegarde Externe",command=fenetre.destroy).grid(row=5,pady=5)
+
 
 #Détection action souris/clavier
 fenetre.mainloop()
