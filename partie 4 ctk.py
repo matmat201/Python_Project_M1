@@ -7,7 +7,7 @@ Created on Fri Feb 23 16:50:32 2024
 ###############
 #Import des bibliotheque
 ###############
-from customtkinter import CTk, CTkLabel, CTkCheckBox, CTkSlider, CTkButton, CTkComboBox, IntVar, CTkFrame
+from customtkinter import CTk, CTkLabel, CTkCheckBox, CTkSlider, CTkButton, CTkComboBox, IntVar, CTkFrame, CTkToplevel, StringVar, CTkEntry, DoubleVar, CTkRadioButton
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -133,19 +133,112 @@ def reset():
     Menu_deroulant.set(list_materiaux[0])
     choix_mat_fct(None)
     
-    PE_ctrl.set(0)
+    PE_ctrl.set(1)
     Ray_ctrl.set(0)
-    Comp_ctrl.set(0)
-    CPn_ctrl.set(0)
-    CPe_ctrl.set(0)
+    Comp_ctrl.set(1)
+    CPn_ctrl.set(1)
+    CPe_ctrl.set(1)
     TotSansRay_ctrl.set(0)
     TotAvecRay_ctrl.set(0)
     
     curseur_tau_min.set(1)
+    update_value_tau(curseur_tau_min.get(), is_max=False)
     curseur_tau_max.set(100)
+    update_value_tau(curseur_tau_max.get(), is_max=True)
     curseur_nrj_min.set(10)
+    update_value_nrj(curseur_nrj_min.get(), is_max=False)
     curseur_nrj_max.set(100)
+    update_value_nrj(curseur_nrj_min.get(), is_max=True)
+    
+    Check_ctrl.set(-1)
 
+##############################################################################
+def Documentation():
+    fen_doc=CTkToplevel(fenetre)
+    fen_doc.title("tau")
+    fen_doc.grab_set() #Focus au premier plan
+    
+##############################################################################
+def Val_Tau():
+    fen_tau=CTkToplevel(fenetre)
+    fen_tau.title("tau")
+    fen_tau.grab_set() #Focus au premier plan
+    
+    global energie
+    global tau
+    global list_interaction
+
+    #placement menu deroulant
+    Choix_mat.grid(row=0, column=0, sticky='w',padx=50)
+    Menu_deroulant.grid(row=0, column=1, sticky='w')
+    
+    energie = StringVar()
+    tau = StringVar()
+        
+    CTkLabel(fen_tau, text="type d'interaction :").grid(row=1,sticky='w',padx=5,pady=5)
+    list_interaction = ["Diffusion Rayleigh","Effet Compton","Effet photoélectrique","Création de paire nucleaire","Création de paire electronique","Atténuation avec diffusion Rayleigh","Atténuation sans diffusion Rayleigh"]
+    Menu_inter = CTkComboBox(fen_tau, values=list_interaction, command=lambda event: select_inter(Menu_inter.get()))
+    Menu_inter.grid(row=1,column=1,padx=5,pady=5)
+    
+    CTkLabel(fen_tau, text="energie :").grid(row=2,sticky='w',padx=5,pady=5)
+    
+    CTkEntry(fen_tau,textvariable=energie).grid(row=2,column=1,padx=5,pady=5)
+    
+    CTkButton(fen_tau,text="extraction",width=20,command=extraction).grid(row=3,sticky='e',pady=10,column=1,padx=5)
+    
+    CTkLabel(fen_tau, text="la valeur de tau est :").grid(row=4,sticky='w',padx=5,pady=5)
+    CTkEntry(fen_tau,textvariable=tau).grid(row=4,column=1,padx=5,pady=5)
+    
+##############################################################################
+def extraction():
+    book = op.load_workbook('bdd_photons_all_datas.xlsx')
+    sheet = book.get_sheet_by_name(mat_choisi)
+    
+    energie_entree = float(energie.get())
+    
+    # Initialisation de la valeur de l'énergie la plus proche et de sa différence minimale
+    energie_proche = None
+    difference_min = float('inf')
+    
+    for i in range(4, sheet.max_row + 1):
+        valeur_energie = float(sheet.cell(row=i, column=1).value)
+        difference = abs(energie_entree - valeur_energie)
+        
+        if difference < difference_min:
+            difference_min = difference
+            energie_proche = valeur_energie
+            
+            tau.set(float(sheet.cell(row=i, column=indice).value))
+
+    book.save('bdd_photons_all_datas.xlsx')
+    print(type_inter,energie_entree, tau.get())
+    
+##############################################################################
+def select_inter(inter):
+    global type_inter
+    type_inter = inter
+    global indice
+    indice = list_interaction.index(inter) + 1
+    
+##############################################################################
+def Selection_radioButton():
+    if Check_ctrl.get() == 1:
+        PE_ctrl.set(1)
+        Ray_ctrl.set(1)
+        Comp_ctrl.set(1)
+        CPn_ctrl.set(1)
+        CPe_ctrl.set(1)
+        TotSansRay_ctrl.set(1)
+        TotAvecRay_ctrl.set(1)
+    else:
+        PE_ctrl.set(0)
+        Ray_ctrl.set(0)
+        Comp_ctrl.set(0)
+        CPn_ctrl.set(0)
+        CPe_ctrl.set(0)
+        TotSansRay_ctrl.set(0)
+        TotAvecRay_ctrl.set(0)
+        
 ##############
 #Programme principal
 ##############
@@ -164,9 +257,6 @@ Choix_mat = CTkLabel(fenetre, text="Choisir un élément Chimique :")
 list_materiaux = ["Aluminium", "Plomb", "Cobalt", "Cuivre"]
 Menu_deroulant = CTkComboBox(fenetre, values=list_materiaux,command=choix_mat_fct)
 Menu_deroulant.set(list_materiaux[0])
-
-#utilisation menu deroulant
-#Menu_deroulant.bind("<<ComboboxSelected>>", choix_mat_fct)
 
 #placement menu deroulant
 Choix_mat.grid(row=0, column=0, sticky='w',padx=50)
@@ -296,11 +386,15 @@ titre_cadre4.grid(row=0,sticky="nw",padx=25,pady=5)
 cadre_nouv.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
 
 
-Aide_B = CTkButton(cadre_nouv, text="Documentation",command=fenetre.destroy).grid(row=1,pady=5)
-Coef_B = CTkButton(cadre_nouv, text="Extraction Tau",command=fenetre.destroy).grid(row=2,pady=5)
+Aide_B = CTkButton(cadre_nouv, text="Documentation",command=Documentation).grid(row=1,pady=5)
+Coef_B = CTkButton(cadre_nouv, text="Extraction Tau",command=Val_Tau).grid(row=2,pady=5)
 Section_B = CTkButton(cadre_nouv, text="Calcul Section Efficace",command=fenetre.destroy).grid(row=3,pady=5)
 Unite_B = CTkButton(cadre_nouv, text="Changement unitée",command=fenetre.destroy).grid(row=4,pady=5)
 Save_B = CTkButton(cadre_nouv, text="Sauvegarde Externe",command=fenetre.destroy).grid(row=5,pady=5)
+
+Check_ctrl = IntVar(value=-1)
+Coche = CTkRadioButton(cadre_nouv, text="Check All",command=Selection_radioButton, variable= Check_ctrl, value=1).grid(row=6,padx=(0,80))
+Decoche = CTkRadioButton(cadre_nouv, text="Uncheck All",command=Selection_radioButton, variable= Check_ctrl, value=0).grid(row=6,padx=(150,0))
 
 
 #Détection action souris/clavier
