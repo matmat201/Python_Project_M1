@@ -1,0 +1,11 @@
+
+
+================================
+***** DONNÉES ENREGISTRÉES *****
+================================
+
+Matériau : Plomb
+Interaction : Diffusion Rayleigh
+Énergie : 1 MeV
+Tau : 2.991e-03 cm²/g
+Section efficace : 1.029e+00 Barn
