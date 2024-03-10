@@ -7,7 +7,7 @@ Created on Fri Feb 23 16:50:32 2024
 ###############
 #Import des bibliotheque
 ###############
-from customtkinter import CTk, CTkLabel, CTkCheckBox, CTkSlider, CTkButton, CTkComboBox, IntVar, CTkFrame, CTkToplevel, StringVar, CTkEntry, DoubleVar, CTkRadioButton
+from customtkinter import CTk, CTkLabel, CTkCheckBox, CTkSlider, CTkButton, CTkComboBox, IntVar, CTkFrame, CTkToplevel, StringVar, CTkEntry, DoubleVar, CTkRadioButton, CTkTabview, set_appearance_mode, set_widget_scaling, CTkTextbox
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -83,8 +83,15 @@ def trace():
     ax.set_xscale('log')
     ax.set_yscale('log')
     
-    ax.set_xlim(scale_to_realmin(curseur_nrj_min.get()),scale_to_realmax(curseur_nrj_max.get()))
-    ax.set_ylim(scale_to_realmin(curseur_tau_min.get()),scale_to_realmax(curseur_tau_max.get()))
+    if control_modif_nrj == 0:
+        ax.set_xlim(scale_to_realmin(curseur_nrj_min.get()),scale_to_realmax(curseur_nrj_max.get()))
+    elif control_modif_tau == 1:
+        ax.set_xlim(float(val_manu_min_nrj.get()),float(val_manu_max_nrj.get()))
+        
+    if control_modif_tau == 0:
+        ax.set_ylim(scale_to_realmin(curseur_tau_min.get()),scale_to_realmax(curseur_tau_max.get()))
+    elif control_modif_tau == 1:
+        ax.set_ylim(float(val_manu_min_tau.get()),float(val_manu_max_tau.get()))
     
     ax.grid(which = "major", axis='y', linestyle = '--')
     ax.grid(which = "both", axis='x', linestyle = '--')
@@ -151,12 +158,22 @@ def reset():
     update_value_nrj(curseur_nrj_min.get(), is_max=True)
     
     Check_ctrl.set(-1)
+    
+    global control_modif_nrj
+    global control_modif_tau
+    control_modif_nrj = 0
+    control_modif_tau = 0
 
 ##############################################################################
 def Documentation():
     fen_doc=CTkToplevel(fenetre)
-    fen_doc.title("tau")
+    fen_doc.title("Documentation")
+    fen_doc.geometry("800x400")
     fen_doc.grab_set() #Focus au premier plan
+    
+    Doc = CTkTextbox(fen_doc,width=800,height=400)
+    Doc.pack()
+    Doc.insert("0.0", "Documentation :\n\n" + "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.\n\n" * 20)
     
 ##############################################################################
 def Val_Tau():
@@ -179,6 +196,7 @@ def Val_Tau():
     list_interaction = ["Diffusion Rayleigh","Effet Compton","Effet photoélectrique","Création de paire nucleaire","Création de paire electronique","Atténuation avec diffusion Rayleigh","Atténuation sans diffusion Rayleigh"]
     Menu_inter = CTkComboBox(fen_tau, values=list_interaction, command=lambda event: select_inter(Menu_inter.get()))
     Menu_inter.grid(row=1,column=1,padx=5,pady=5)
+    Menu_inter.set("choisi une interaction")
     
     CTkLabel(fen_tau, text="energie :").grid(row=2,sticky='w',padx=5,pady=5)
     
@@ -208,7 +226,7 @@ def extraction():
             difference_min = difference
             energie_proche = valeur_energie
             
-            tau.set(float(sheet.cell(row=i, column=indice).value))
+            tau.set("{:.3e}".format(float(sheet.cell(row=i, column=indice).value)))
 
     book.save('bdd_photons_all_datas.xlsx')
     print(type_inter,energie_entree, tau.get())
@@ -218,7 +236,7 @@ def select_inter(inter):
     global type_inter
     type_inter = inter
     global indice
-    indice = list_interaction.index(inter) + 1
+    indice = list_interaction.index(inter) + 2
     
 ##############################################################################
 def Selection_radioButton():
@@ -238,16 +256,161 @@ def Selection_radioButton():
         CPe_ctrl.set(0)
         TotSansRay_ctrl.set(0)
         TotAvecRay_ctrl.set(0)
+    
+##############################################################################
+def change_mode_apparence(event):
+    mode = Mode_menu.get()
+    set_appearance_mode(mode)
+    
+def change_zoom(event):
+    zoom = Zoom_menu.get()
+    zoom = int(zoom.replace("%",""))/100
+    set_widget_scaling(zoom)
+    
+##############################################################################
+def section_eff():
+    fen_sec_eff=CTkToplevel(fenetre)
+    fen_sec_eff.title("Section efficace")
+    fen_sec_eff.grab_set()
+    
+    if mat_choisi == "Aluminium":
+        Text = "de l'"
+    else:
+        Text = "du "
+    
+    global sec_eff
+    sec_eff = StringVar()
+    sec_eff.set("{:.3e}".format(float(float(tau.get())*Mass_atm[mat_choisi]/avogadro/barn)))
+    #print(sec_eff.get())
+    
+    CTkLabel(fen_sec_eff, text=f"La section efficace {Text}{mat_choisi}").grid(row=1,sticky='w',padx=5,pady=5)
+    CTkLabel(fen_sec_eff, text=f"pour l'interaction => {list_interaction[indice-2]}").grid(row=2,sticky='w',padx=5,pady=5)
+    CTkLabel(fen_sec_eff, text=f"a l'énergie de {energie.get()} MeV").grid(row=3,sticky='w',padx=5,pady=5)
+    CTkLabel(fen_sec_eff, text=f"vaut : {sec_eff.get()}").grid(row=4,sticky="w",padx=5,pady=5)
+    #CTkEntry(fen_sec_eff,textvariable=sec_eff,fg_color="transparent",border_width=0).grid(row=4,padx=(8,0),pady=5)
+    
+##############################################################################
+def fenetre_donnees():
+    global fen_sauv
+    fen_sauv=CTkToplevel(fenetre)
+    fen_sauv.title("Sauvegarde")
+    fen_sauv.grab_set()  
+    
+    global nom_fichier
+    nom_fichier = StringVar()
+    nom_fichier.set("donnees.txt")
+    
+    global nom_image
+    nom_image = StringVar()
+    nom_image.set("image.png")
+    
+    CTkLabel(fen_sauv, text="Nom du fichier de sauvegarde").grid(row=1,column=1,sticky="w",padx=5, pady=5)
+    CTkEntry(fen_sauv, textvariable=nom_fichier).grid(row=1,column=2,sticky="w",padx=5, pady=5)
+    CTkButton(fen_sauv, text="Enregistrer",command= sauvegarder_donnees).grid(row=2,columnspan=3,padx=5, pady=5)
+    
+    CTkLabel(fen_sauv, text="Nom de l'image a enregistrer").grid(row=3,column=1,sticky="w",padx=5, pady=5)
+    CTkEntry(fen_sauv, textvariable=nom_image).grid(row=3,column=2,sticky="w",padx=5, pady=5)
+    CTkButton(fen_sauv, text="Enregistrer",command= sauvegarder_image).grid(row=4,columnspan=3,padx=5, pady=5)
+    
+    
+def sauvegarder_donnees():
+    fichier = open(nom_fichier.get(), "w")    # Ouvrir le fichier en mode écriture
         
+    fichier.write("\n\n================================\n")
+    fichier.write("***** DONNÉES ENREGISTRÉES *****\n")
+    fichier.write("================================\n\n")
+        
+    fichier.write(f"Matériau : {mat_choisi}\n")
+    fichier.write(f"Interaction : {list_interaction[indice-2]}\n")
+    fichier.write(f"Énergie : {energie.get()} MeV\n")
+    fichier.write(f"Tau : {tau.get()} cm²/g\n")
+    fichier.write(f"Section efficace : {sec_eff.get()} Barn\n")
+    
+    fichier.close()
+        
+    print("Données enregistrées avec succès dans", nom_fichier.get())
+    
+def sauvegarder_image():
+    fig.savefig(nom_image.get())
+    print("Image enregistrée avec succès dans", nom_image.get())
+##############################################################################
+def saisie_manu_tau():
+    global fen_saisi_tau
+    fen_saisi_tau=CTkToplevel(fenetre)
+    fen_saisi_tau.title("Saisie manuelle tau")
+    fen_saisi_tau.grab_set()
+    
+    global val_manu_max_tau
+    global val_manu_min_tau
+ 
+    val_manu_max_tau = StringVar()
+    val_manu_max_tau.set("{:.3e}".format(1e+4))
+    val_manu_min_tau = StringVar()
+    val_manu_min_tau.set("{:.3e}".format(1e-4))
+    
+    CTkLabel(fen_saisi_tau, text="Atténuation max (cm²/g)").grid(row=2,column=1,sticky="w",padx=5, pady=5)
+    CTkEntry(fen_saisi_tau, textvariable=val_manu_max_tau).grid(row=2,column=2,sticky="w",padx=5, pady=5)
+    
+    CTkLabel(fen_saisi_tau, text="Atténuation min (cm²/g)").grid(row=1,column=1,sticky="w",padx=5, pady=5)
+    CTkEntry(fen_saisi_tau, textvariable=val_manu_min_tau).grid(row=1,column=2,sticky="w",padx=5, pady=5)
+    
+    CTkButton(fen_saisi_tau, text="Valider",command= validation_tau).grid(row=3,columnspan=3,padx=5, pady=5)
+    
+def saisie_manu_nrj():
+    global fen_saisi_nrj
+    fen_saisi_nrj=CTkToplevel(fenetre)
+    fen_saisi_nrj.title("Saisie manuelle nrj")
+    fen_saisi_nrj.grab_set()
+    
+    global val_manu_max_nrj
+    global val_manu_min_nrj
+
+    val_manu_max_nrj = StringVar()
+    val_manu_max_nrj.set("{:.3e}".format(1e+4))
+    val_manu_min_nrj = StringVar()
+    val_manu_min_nrj.set("{:.3e}".format(1e-3))
+    
+    CTkLabel(fen_saisi_nrj, text="Énergie max (MeV)").grid(row=2,column=1,sticky="w",padx=5, pady=5)
+    CTkEntry(fen_saisi_nrj, textvariable=val_manu_max_nrj).grid(row=2,column=2,sticky="w",padx=5, pady=5)
+    
+    CTkLabel(fen_saisi_nrj, text="Énergie min (MeV)").grid(row=1,column=1,sticky="w",padx=5, pady=5)
+    CTkEntry(fen_saisi_nrj, textvariable=val_manu_min_nrj).grid(row=1,column=2,sticky="w",padx=5, pady=5)
+    
+    CTkButton(fen_saisi_nrj, text="Valider",command= validation_nrj).grid(row=3,columnspan=3,padx=5, pady=5)
+    
+def validation_tau():
+    global control_modif_tau
+    control_modif_tau = 1
+    fen_saisi_tau.destroy()
+    trace()
+    
+def validation_nrj():
+    global control_modif_nrj
+    control_modif_nrj = 1
+    fen_saisi_nrj.destroy()
+    trace()
+    
+
 ##############
 #Programme principal
 ##############
+control_modif_tau = 0
+
+control_modif_nrj = 0
+
+global avogadro
+avogadro = 6.022e23
+
+global barn
+barn = 1e-24
+
+Mass_atm = {"Aluminium": 26.98, "Plomb": 207.2, "Cobalt": 58.93, "Cuivre": 63.55}
 
 mat_choisi = "Aluminium"
 
 #création d'une fenêtre tkinter
 fenetre = CTk()
-fenetre.geometry("1050x550")
+fenetre.geometry("1050x570")
 
 #Titre à la fenêtre
 fenetre.title("interactions des photon dans la matière")
@@ -316,23 +479,26 @@ cadre_courbe.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
 #creation cadre val tau
 cadre_tau = CTkFrame(fenetre)
 titre_cadre2 = CTkLabel(cadre_tau, text="Choisi les valeurs extremum de tau :")
-titre_cadre2.grid(row=0,sticky="nw",padx=25,pady=5)
+titre_cadre2.pack()
 
 #creation des sliders tau
 curseur_tau_min = CTkSlider(cadre_tau, from_=1, to=100, command=lambda value: update_value_tau(value, is_max=False))
 label_valeur_tau_min = CTkLabel(cadre_tau, text="Valeur minimal de tau : ")
 curseur_tau_min.set(1)
-curseur_tau_min.grid(row=1, sticky="we")
-label_valeur_tau_min.grid(row=2, sticky="we")
+curseur_tau_min.pack()
+label_valeur_tau_min.pack()
 
 curseur_tau_max = CTkSlider(cadre_tau, from_=1, to=100, command=lambda value: update_value_tau(value, is_max=True))
 label_valeur_tau_max = CTkLabel(cadre_tau, text="Valeur maximal de tau : ")
 curseur_tau_max.set(100)
-curseur_tau_max.grid(row=3, sticky="we")
-label_valeur_tau_max.grid(row=4, sticky="we")
+curseur_tau_max.pack()
+label_valeur_tau_max.pack()
 
 update_value_tau(curseur_tau_min.get(), is_max=False)
 update_value_tau(curseur_tau_max.get(), is_max=True)
+
+bouton_saisie_manu1 = CTkButton(cadre_tau,text="Saisie manuelle",command=saisie_manu_tau)
+bouton_saisie_manu1.pack()
 
 #placement du cadre tau
 cadre_tau.grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
@@ -340,23 +506,26 @@ cadre_tau.grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
 #creation cadre val energie
 cadre_nrj = CTkFrame(fenetre)
 titre_cadre3 = CTkLabel(cadre_nrj, text="Choisi les valeurs extremum de l'energie :")
-titre_cadre3.grid(row=0,column=0,sticky="nw",padx=15,pady=5)
+titre_cadre3.pack()
 
 #creation des sliders
 curseur_nrj_min = CTkSlider(cadre_nrj, from_=1, to=100, command=lambda value: update_value_nrj(value, is_max=False))
 label_valeur_nrj_min = CTkLabel(cadre_nrj, text="Valeur minimal de l'énergie : ")
 curseur_nrj_min.set(10)
-curseur_nrj_min.grid(row=1, sticky="we")
-label_valeur_nrj_min.grid(row=2, sticky="we")
+curseur_nrj_min.pack()
+label_valeur_nrj_min.pack()
 
 curseur_nrj_max = CTkSlider(cadre_nrj, from_=1, to=100, command=lambda value: update_value_nrj(value, is_max=True))
 label_valeur_nrj_max = CTkLabel(cadre_nrj, text="Valeur maximal de l'énergie : ")
 curseur_nrj_max.set(100)
-curseur_nrj_max.grid(row=3, sticky="we")
-label_valeur_nrj_max.grid(row=4, sticky="we")
+curseur_nrj_max.pack()
+label_valeur_nrj_max.pack()
 
 update_value_nrj(curseur_nrj_min.get(), is_max=False)
 update_value_nrj(curseur_nrj_max.get(), is_max=True)
+
+bouton_saisie_manu2 = CTkButton(cadre_nrj,text="Saisie manuelle",command=saisie_manu_nrj)
+bouton_saisie_manu2.pack()
 
 #placement du cadre energie
 cadre_nrj.grid(row=2, column=1, padx=10, pady=10, sticky="nsew")
@@ -379,7 +548,35 @@ Quitter_B.grid(row=3,column=2)
 
 canvas.grid(row=1, column=2, rowspan=2, padx=10, pady=10, sticky="nsew")
 
-#cadre des nouvelles fonctions#Creation du cadre selec courbe
+#tabview des nouvelles fonctions et des options
+Tabview_fonc = CTkTabview(fenetre)
+Tabview_fonc.add("Fonction Part 4")
+Tabview_fonc.add("Options")
+Tabview_fonc.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
+
+
+Aide_B = CTkButton(Tabview_fonc.tab("Fonction Part 4"), text="Aide",command=Documentation).grid(row=1,pady=5,padx=(40,0))
+Coef_B = CTkButton(Tabview_fonc.tab("Fonction Part 4"), text="Extraction Tau",command=Val_Tau).grid(row=2,pady=5,padx=(40,0))
+Section_B = CTkButton(Tabview_fonc.tab("Fonction Part 4"), text="Calcul Section Efficace",command=section_eff).grid(row=3,pady=5,padx=(40,0))
+Unite_B = CTkButton(Tabview_fonc.tab("Fonction Part 4"), text="Changement unitée",command=fenetre.destroy).grid(row=4,pady=5,padx=(40,0))
+Save_B = CTkButton(Tabview_fonc.tab("Fonction Part 4"), text="Sauvegarde Externe",command=fenetre_donnees).grid(row=5,pady=5,padx=(40,0))
+
+Check_ctrl = IntVar(value=-1)
+Coche = CTkRadioButton(Tabview_fonc.tab("Fonction Part 4"), text="Check All",command=Selection_radioButton, variable= Check_ctrl, value=1).grid(row=6,padx=(0,80))
+Decoche = CTkRadioButton(Tabview_fonc.tab("Fonction Part 4"), text="Uncheck All",command=Selection_radioButton, variable= Check_ctrl, value=0).grid(row=6,padx=(150,0))
+
+
+Mode_ent = CTkLabel(Tabview_fonc.tab("Options"),text="Mode d'apparence").grid(row=1,column=1,pady=10,padx=(10,0))
+Mode_menu = CTkComboBox(Tabview_fonc.tab("Options"),values=["Light", "Dark", "System"],command=change_mode_apparence)
+Mode_menu.grid(row=1,column=2,pady=10,padx=(10,0))
+Mode_menu.set("Dark")
+
+Zoom_ent = CTkLabel(Tabview_fonc.tab("Options"),text="Zoom").grid(row=2,column=1,pady=10,padx=(10,0))
+Zoom_menu = CTkComboBox(Tabview_fonc.tab("Options"),values=["80%", "90%", "100%", "110%", "120%"],command=change_zoom)
+Zoom_menu.grid(row=2,column=2,pady=10,padx=(10,0))
+Zoom_menu.set("100")
+
+'''
 cadre_nouv = CTkFrame(fenetre)
 titre_cadre4 = CTkLabel(cadre_nouv, text="Nouvelles fonctions implémentée :")
 titre_cadre4.grid(row=0,sticky="nw",padx=25,pady=5)
@@ -394,7 +591,7 @@ Save_B = CTkButton(cadre_nouv, text="Sauvegarde Externe",command=fenetre.destroy
 
 Check_ctrl = IntVar(value=-1)
 Coche = CTkRadioButton(cadre_nouv, text="Check All",command=Selection_radioButton, variable= Check_ctrl, value=1).grid(row=6,padx=(0,80))
-Decoche = CTkRadioButton(cadre_nouv, text="Uncheck All",command=Selection_radioButton, variable= Check_ctrl, value=0).grid(row=6,padx=(150,0))
+Decoche = CTkRadioButton(cadre_nouv, text="Uncheck All",command=Selection_radioButton, variable= Check_ctrl, value=0).grid(row=6,padx=(150,0))'''
 
 
 #Détection action souris/clavier
