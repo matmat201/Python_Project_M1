@@ -8,6 +8,8 @@ Created on Fri Feb 23 16:50:32 2024
 #Import des bibliotheque
 ###############
 from customtkinter import CTk, CTkLabel, CTkCheckBox, CTkSlider, CTkButton, CTkComboBox, IntVar, CTkFrame, CTkToplevel, StringVar, CTkEntry, DoubleVar, CTkRadioButton, CTkTabview, set_appearance_mode, set_widget_scaling, CTkTextbox
+from CTkToolTip import CTkToolTip
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -49,10 +51,53 @@ def choix_mat_fct(event):
     mat_choisi = Menu_deroulant.get()
     print("Élément sélectionné :", mat_choisi)
 ##############################################################################    
-def trace():
+def recup_data():
     # Lecture des datas
     book = op.load_workbook('bdd_photons_all_datas.xlsx')
     sheet = book.get_sheet_by_name(mat_choisi)
+
+    global Energie
+    global Diff_ela
+    global Diff_c
+    global Photoel
+    global CP_nuc
+    global CP_el
+    global Tot_w_ela
+    global Tot_wo_ela
+
+    Energie = []
+    Diff_ela = []
+    Diff_c = []
+    Photoel = []
+    CP_nuc = []
+    CP_el = []
+    Tot_w_ela = []
+    Tot_wo_ela = []
+    
+    for i in range(4,sheet.max_row+1):                                  #on sait que les données commence a la 4ieme ligne
+        Energie.append(float(sheet.cell(row = i, column = 1).value))
+        Diff_ela.append(float(sheet.cell(row = i, column = 2).value))
+        Diff_c.append(float(sheet.cell(row = i, column = 3).value))
+        Photoel.append(float(sheet.cell(row = i, column = 4).value))
+        CP_nuc.append(float(sheet.cell(row = i, column = 5).value))
+        CP_el.append(float(sheet.cell(row = i, column = 6).value))
+        Tot_w_ela.append(float(sheet.cell(row = i, column = 7).value))
+        Tot_wo_ela.append(float(sheet.cell(row = i, column = 8).value))
+    
+    book.save('bdd_photons_all_datas.xlsx')
+
+def trace():
+    # Lecture des datas
+    '''book = op.load_workbook('bdd_photons_all_datas.xlsx')
+    sheet = book.get_sheet_by_name(mat_choisi)
+
+    global Diff_ela
+    global Diff_c
+    global Photoel
+    global CP_nuc
+    global CP_el
+    global Tot_w_ela
+    global Tot_wo_ela
 
     Energie = []
     Diff_ela = []
@@ -71,7 +116,9 @@ def trace():
         CP_nuc.append(float(sheet.cell(row = i, column = 5).value))
         CP_el.append(float(sheet.cell(row = i, column = 6).value))
         Tot_w_ela.append(float(sheet.cell(row = i, column = 7).value))
-        Tot_wo_ela.append(float(sheet.cell(row = i, column = 8).value))
+        Tot_wo_ela.append(float(sheet.cell(row = i, column = 8).value))'''
+    if ctrl_conv == 0:
+        recup_data()
 
     fig.clear() #On efface la zone graphique
     fig.canvas.draw() #On efface le canvas vide
@@ -120,7 +167,7 @@ def trace():
     ax.legend()
     fig.canvas.draw()
 
-    book.save('bdd_photons_all_datas.xlsx')
+    #book.save('bdd_photons_all_datas.xlsx')
 ##############################################################################
 def reset():
     fig.clear()
@@ -163,6 +210,9 @@ def reset():
     global control_modif_tau
     control_modif_nrj = 0
     control_modif_tau = 0
+    
+    global ctrl_conv
+    ctrl_conv = 0
 
 ##############################################################################
 def Documentation():
@@ -286,7 +336,7 @@ def section_eff():
     CTkLabel(fen_sec_eff, text=f"La section efficace {Text}{mat_choisi}").grid(row=1,sticky='w',padx=5,pady=5)
     CTkLabel(fen_sec_eff, text=f"pour l'interaction => {list_interaction[indice-2]}").grid(row=2,sticky='w',padx=5,pady=5)
     CTkLabel(fen_sec_eff, text=f"a l'énergie de {energie.get()} MeV").grid(row=3,sticky='w',padx=5,pady=5)
-    CTkLabel(fen_sec_eff, text=f"vaut : {sec_eff.get()}").grid(row=4,sticky="w",padx=5,pady=5)
+    CTkLabel(fen_sec_eff, text=f"vaut : {sec_eff.get()} barn").grid(row=4,sticky="w",padx=5,pady=5)
     #CTkEntry(fen_sec_eff,textvariable=sec_eff,fg_color="transparent",border_width=0).grid(row=4,padx=(8,0),pady=5)
     
 ##############################################################################
@@ -390,13 +440,53 @@ def validation_nrj():
     fen_saisi_nrj.destroy()
     trace()
     
+##############################################################################
+def Text_survol():
+    print(tooltip_Unite.get())
+    
+##############################################################################
+def Conversion():
+    
+    global Diff_ela
+    global Diff_c
+    global Photoel
+    global CP_nuc
+    global CP_el
+    global Tot_w_ela
+    global Tot_wo_ela
+    global ctrl_conv
+    
+    if ctrl_conv == 0:
+        Diff_ela = [val_tau * rho[mat_choisi] for val_tau in Diff_ela]
+        Diff_c = [val_tau * rho[mat_choisi] for val_tau in Diff_c]
+        Photoel = [val_tau * rho[mat_choisi] for val_tau in Photoel]
+        CP_nuc = [val_tau * rho[mat_choisi] for val_tau in CP_nuc]
+        CP_el = [val_tau * rho[mat_choisi] for val_tau in CP_el]
+        Tot_w_ela = [val_tau * rho[mat_choisi] for val_tau in Tot_w_ela]
+        Tot_wo_ela = [val_tau * rho[mat_choisi] for val_tau in Tot_wo_ela]
 
+        ctrl_conv = 1
+        
+    elif ctrl_conv == 1:
+        Diff_ela = [val_tau / rho[mat_choisi] for val_tau in Diff_ela]
+        Diff_c = [val_tau / rho[mat_choisi] for val_tau in Diff_c]
+        Photoel = [val_tau / rho[mat_choisi] for val_tau in Photoel]
+        CP_nuc = [val_tau / rho[mat_choisi] for val_tau in CP_nuc]
+        CP_el = [val_tau / rho[mat_choisi] for val_tau in CP_el]
+        Tot_w_ela = [val_tau / rho[mat_choisi] for val_tau in Tot_w_ela]
+        Tot_wo_ela = [val_tau / rho[mat_choisi] for val_tau in Tot_wo_ela]
+
+        ctrl_conv = 0   
+    
+    trace()
 ##############
 #Programme principal
 ##############
 control_modif_tau = 0
 
 control_modif_nrj = 0
+
+ctrl_conv = 0
 
 global avogadro
 avogadro = 6.022e23
@@ -405,6 +495,8 @@ global barn
 barn = 1e-24
 
 Mass_atm = {"Aluminium": 26.98, "Plomb": 207.2, "Cobalt": 58.93, "Cuivre": 63.55}
+
+rho = {"Aluminium": 2.698, "Plomb": 11.342, "Cobalt": 8.900, "Cuivre": 8.960}
 
 mat_choisi = "Aluminium"
 
@@ -558,8 +650,13 @@ Tabview_fonc.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
 Aide_B = CTkButton(Tabview_fonc.tab("Fonction Part 4"), text="Aide",command=Documentation).grid(row=1,pady=5,padx=(40,0))
 Coef_B = CTkButton(Tabview_fonc.tab("Fonction Part 4"), text="Extraction Tau",command=Val_Tau).grid(row=2,pady=5,padx=(40,0))
 Section_B = CTkButton(Tabview_fonc.tab("Fonction Part 4"), text="Calcul Section Efficace",command=section_eff).grid(row=3,pady=5,padx=(40,0))
-Unite_B = CTkButton(Tabview_fonc.tab("Fonction Part 4"), text="Changement unitée",command=fenetre.destroy).grid(row=4,pady=5,padx=(40,0))
+Unite_B = CTkButton(Tabview_fonc.tab("Fonction Part 4"), text="Changement unitée",command=Conversion)
+Unite_B.grid(row=4,pady=5,padx=(40,0))
 Save_B = CTkButton(Tabview_fonc.tab("Fonction Part 4"), text="Sauvegarde Externe",command=fenetre_donnees).grid(row=5,pady=5,padx=(40,0))
+
+tooltip_Unite = CTkToolTip(Unite_B, delay=0.1, message="Ce bouton permet de convertir\n"
+                 'la valeur d\'aténuation tau (cm²/g)\n'
+                 'en coefficient d\'atténuation linéique mu (cm-1)')
 
 Check_ctrl = IntVar(value=-1)
 Coche = CTkRadioButton(Tabview_fonc.tab("Fonction Part 4"), text="Check All",command=Selection_radioButton, variable= Check_ctrl, value=1).grid(row=6,padx=(0,80))
@@ -576,23 +673,12 @@ Zoom_menu = CTkComboBox(Tabview_fonc.tab("Options"),values=["80%", "90%", "100%"
 Zoom_menu.grid(row=2,column=2,pady=10,padx=(10,0))
 Zoom_menu.set("100")
 
-'''
-cadre_nouv = CTkFrame(fenetre)
-titre_cadre4 = CTkLabel(cadre_nouv, text="Nouvelles fonctions implémentée :")
-titre_cadre4.grid(row=0,sticky="nw",padx=25,pady=5)
-cadre_nouv.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
+Language_ent = CTkLabel(Tabview_fonc.tab("Options"),text="Langue").grid(row=3,column=1,pady=10,padx=(10,0))
+Language_menu = CTkComboBox(Tabview_fonc.tab("Options"),values=["Français", "WIP", "..."])
+Language_menu.grid(row=3,column=2,pady=10,padx=(10,0))
+Language_menu.set("Français")
 
-
-Aide_B = CTkButton(cadre_nouv, text="Documentation",command=Documentation).grid(row=1,pady=5)
-Coef_B = CTkButton(cadre_nouv, text="Extraction Tau",command=Val_Tau).grid(row=2,pady=5)
-Section_B = CTkButton(cadre_nouv, text="Calcul Section Efficace",command=fenetre.destroy).grid(row=3,pady=5)
-Unite_B = CTkButton(cadre_nouv, text="Changement unitée",command=fenetre.destroy).grid(row=4,pady=5)
-Save_B = CTkButton(cadre_nouv, text="Sauvegarde Externe",command=fenetre.destroy).grid(row=5,pady=5)
-
-Check_ctrl = IntVar(value=-1)
-Coche = CTkRadioButton(cadre_nouv, text="Check All",command=Selection_radioButton, variable= Check_ctrl, value=1).grid(row=6,padx=(0,80))
-Decoche = CTkRadioButton(cadre_nouv, text="Uncheck All",command=Selection_radioButton, variable= Check_ctrl, value=0).grid(row=6,padx=(150,0))'''
-
+Credit_B = CTkButton(Tabview_fonc.tab("Options"),text="Crédits").grid(row=4,columnspan=3,pady=(50,0),padx=(10,0))
 
 #Détection action souris/clavier
 fenetre.mainloop()
