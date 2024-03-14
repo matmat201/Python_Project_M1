@@ -7,17 +7,16 @@ Created on Fri Feb 23 16:50:32 2024
 ###############
 #Import des bibliotheque
 ###############
-from customtkinter import CTk, CTkLabel, CTkCheckBox, CTkSlider, CTkButton, CTkComboBox, IntVar, CTkFrame, CTkToplevel, StringVar, CTkEntry, DoubleVar, CTkRadioButton, CTkTabview, set_appearance_mode, set_widget_scaling, CTkTextbox
+from customtkinter import CTk, CTkLabel, CTkCheckBox, CTkSlider, CTkButton, CTkComboBox, IntVar, CTkFrame, CTkToplevel, StringVar, CTkEntry, CTkRadioButton, CTkTabview, set_appearance_mode, set_widget_scaling, CTkTextbox, CTkSegmentedButton, CTkProgressBar
 from CTkToolTip import CTkToolTip
-
-import matplotlib.pyplot as plt
-import numpy as np
 
 # Importation des outils matplotlib pour créer zone graphique dans fenêtre tkinter 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 import openpyxl as op
+
+import webbrowser
 
 ##############################################################################
 # Fonctions pour convertir les valeurs du curseur en valeurs réelles
@@ -87,36 +86,6 @@ def recup_data():
     book.save('bdd_photons_all_datas.xlsx')
 
 def trace():
-    # Lecture des datas
-    '''book = op.load_workbook('bdd_photons_all_datas.xlsx')
-    sheet = book.get_sheet_by_name(mat_choisi)
-
-    global Diff_ela
-    global Diff_c
-    global Photoel
-    global CP_nuc
-    global CP_el
-    global Tot_w_ela
-    global Tot_wo_ela
-
-    Energie = []
-    Diff_ela = []
-    Diff_c = []
-    Photoel = []
-    CP_nuc = []
-    CP_el = []
-    Tot_w_ela = []
-    Tot_wo_ela = []
-
-    for i in range(4,sheet.max_row+1):                                  #on sait que les données commence a la 4ieme ligne
-        Energie.append(float(sheet.cell(row = i, column = 1).value))
-        Diff_ela.append(float(sheet.cell(row = i, column = 2).value))
-        Diff_c.append(float(sheet.cell(row = i, column = 3).value))
-        Photoel.append(float(sheet.cell(row = i, column = 4).value))
-        CP_nuc.append(float(sheet.cell(row = i, column = 5).value))
-        CP_el.append(float(sheet.cell(row = i, column = 6).value))
-        Tot_w_ela.append(float(sheet.cell(row = i, column = 7).value))
-        Tot_wo_ela.append(float(sheet.cell(row = i, column = 8).value))'''
     if ctrl_conv == 0:
         recup_data()
 
@@ -132,7 +101,7 @@ def trace():
     
     if control_modif_nrj == 0:
         ax.set_xlim(scale_to_realmin(curseur_nrj_min.get()),scale_to_realmax(curseur_nrj_max.get()))
-    elif control_modif_tau == 1:
+    elif control_modif_nrj == 1:
         ax.set_xlim(float(val_manu_min_nrj.get()),float(val_manu_max_nrj.get()))
         
     if control_modif_tau == 0:
@@ -167,7 +136,6 @@ def trace():
     ax.legend()
     fig.canvas.draw()
 
-    #book.save('bdd_photons_all_datas.xlsx')
 ##############################################################################
 def reset():
     fig.clear()
@@ -221,9 +189,49 @@ def Documentation():
     fen_doc.geometry("800x400")
     fen_doc.grab_set() #Focus au premier plan
     
-    Doc = CTkTextbox(fen_doc,width=800,height=400)
+    Doc = CTkTextbox(fen_doc,width=800,height=400,wrap="word")
     Doc.pack()
-    Doc.insert("0.0", "Documentation :\n\n" + "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.\n\n" * 20)
+    #Doc.insert("0.0", "Documentation :\n\n" + "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.\n\n" * 20)
+    documentation_content = (
+        "================================\n"
+        "                                 A i d e\n"
+        "================================\n\n"
+        "Ce programme permet de modeliser l'evolution des coefficients d’atténuation massiques"
+        " des photons traversant en fonction de leur energie. De plus il permet de choisir"
+        " différents milieux traversée ainsi que different type d'effets physiques tout en"
+        " ajustant les paramètres des graphique"
+        " D'autre part, il permet a l'utilisateur de recuperer des valeurs precises de ces"
+        " coefficient en offrant la possibilité de choisir une énérgie personnalisé. Il offre"
+        " aussi la possibilité de convertir ces valeur en section efficace (barn) ainsi que"
+        " de sauvegarder les données alors obtenues\n\n"
+        "Fonctionnalités principales :\n"
+        "- Sélection du matériau\n"
+        "- Sélaction du type d'interaction à étudier.\n"
+        "- Visualisation des courbes associées aux différents types d'interactions.\n"
+        "- Réglage des valeurs extrêmes de tau et de l'énergie pour affiner l'affichage.\n"
+        "- Possibilité de saisie manuelle des valeurs de tau et de l'énergie.\n"
+        "- Récuperation d'une valeur précise de tau selon les besoin de l'utilisateur\n"
+        "- Calcul automatique des sections efficaces correspondante en fonction des paramètres sélectionnés.\n"
+        "- Sauvegarde des données et des graphiques générés.\n"
+        "- Divers fonction d'interface utilisateur a des fins de personalisation\n\n"
+        "Utilisation :\n"
+        "1. Sélectionnez le matériau et le type d'interaction a l'aide du menu déroulant et des cases a cocher.\n"
+        "(par defaut, la configuration permet de visualiser pour des photon dans l'aluminium, les tau de l'éffet photoélectrique,"
+        "l'effet compton, la creation de paire nucléaire et éléctronique ainsi que la somme des effets')\n"
+        "2. Ajustez les valeurs extrêmum de tau et d'énergie si nécessaire.\n"
+        "3. Appuyez sur le bouton 'Tracer' pour afficher les courbes.\n"
+        "4. Appuyez sur le bouton 'Extraction Tau' pour recuperer la valeur de tau pour une énérgie voulue.\n"
+        "5. Appuyer sur le bouton 'Calcul Section Efficace' pour convertir la valeur obtenue de tau en barn.\n"
+        "6. Si vous souhaitez plutot travailler avec Mu plutôt que Tau appuyer sur le bouton 'Changement unitée'.\n"
+        "7. Une fois les valeurs souhaitais obtenue et le graphe tracé avec les données souhaitée il est possible de les enregistrer"
+        " dans des fichier externe avec le bouton 'Sauvegarde Externe'.\n"
+        "8. Autres fonctions optionnelles => possibilité de réinitialiser les choix a la configuration par defaut avec le bouton correspondant\n"
+        "                                                             => possibilité de cocher ou decocher tous les effets pour visualiser rapidement les courbes pour different matériaux\n"
+        "9. Il est possible de modifier l'interface graphique : theme de couleur, echelle de zoom, langue. Pour coller au choix de l'utilisateur\n\n"
+        "Pour plus d'informations sur le fonctionnement du programme, veuillez vous référer aux liens donnés en crédits"
+    )
+    Doc.insert("0.0", documentation_content)
+    Doc.configure(state="disabled")
     
 ##############################################################################
 def Val_Tau():
@@ -279,7 +287,7 @@ def extraction():
             tau.set("{:.3e}".format(float(sheet.cell(row=i, column=indice).value)))
 
     book.save('bdd_photons_all_datas.xlsx')
-    print(type_inter,energie_entree, tau.get())
+    print(type_inter,energie_entree,energie_proche, tau.get())
     
 ##############################################################################
 def select_inter(inter):
@@ -433,13 +441,13 @@ def validation_tau():
     control_modif_tau = 1
     fen_saisi_tau.destroy()
     trace()
-    
+
 def validation_nrj():
     global control_modif_nrj
     control_modif_nrj = 1
     fen_saisi_nrj.destroy()
     trace()
-    
+
 ##############################################################################
 def Text_survol():
     print(tooltip_Unite.get())
@@ -479,6 +487,34 @@ def Conversion():
         ctrl_conv = 0   
     
     trace()
+    
+def credit():
+    fen_cred=CTkToplevel(fenetre)
+    fen_cred.title("Sauvegarde")
+    fen_cred.grab_set()
+    
+    global link_selec
+    link_selec = StringVar()
+    
+    CTkLabel(fen_cred, text="Dev by Mathis BRONNER-BERENGER\n""during a programming project in\n""first year of nuclear engineering\n""master degree").grid(row=1,padx=5, pady=5)
+    Link_B = CTkButton(fen_cred, text="Usefull links\n""↓",text_color_disabled="white")
+    Link_B.grid(row=2,padx=5, pady=5)
+    Link_B.configure(state="disabled")
+    CTkSegmentedButton(fen_cred, values=["Project link","CustomTkinter","CTkToolTip"],command=ouvre_lien,variable=link_selec).grid(row=3,padx=5, pady=5)
+    CTkLabel(fen_cred, text="Thank you for using my little app").grid(row=4,padx=5, pady=5)
+    progressbar_1 = CTkProgressBar(fen_cred)
+    progressbar_1.grid(row=5, column=0, padx=(20, 10), pady=(10, 10), sticky="ew")
+    progressbar_1.configure(mode="indeterminnate")
+    progressbar_1.start()
+    
+
+def ouvre_lien(event):
+    if link_selec.get() == "Project link":
+        webbrowser.open_new(git_1)
+    if link_selec.get() == "CustomTkinter":
+        webbrowser.open_new(git_2)
+    if link_selec.get() == "CTkToolTip":
+        webbrowser.open_new(git_3)
 ##############
 #Programme principal
 ##############
@@ -499,6 +535,10 @@ Mass_atm = {"Aluminium": 26.98, "Plomb": 207.2, "Cobalt": 58.93, "Cuivre": 63.55
 rho = {"Aluminium": 2.698, "Plomb": 11.342, "Cobalt": 8.900, "Cuivre": 8.960}
 
 mat_choisi = "Aluminium"
+
+git_1 = "https://github.com/matmat201/Python_Project_M1"
+git_2 = "https://customtkinter.tomschimansky.com"
+git_3 = "https://github.com/Akascape/CTkToolTip"
 
 #création d'une fenêtre tkinter
 fenetre = CTk()
@@ -678,7 +718,9 @@ Language_menu = CTkComboBox(Tabview_fonc.tab("Options"),values=["Français", "WI
 Language_menu.grid(row=3,column=2,pady=10,padx=(10,0))
 Language_menu.set("Français")
 
-Credit_B = CTkButton(Tabview_fonc.tab("Options"),text="Crédits").grid(row=4,columnspan=3,pady=(50,0),padx=(10,0))
+Credit_B = CTkButton(Tabview_fonc.tab("Options"),text="Crédits",command=credit).grid(row=4,columnspan=3,pady=(50,0),padx=(15,0))
+
+trace()
 
 #Détection action souris/clavier
 fenetre.mainloop()
