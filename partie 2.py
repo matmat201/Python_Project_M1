@@ -53,7 +53,7 @@ def trace_alu():
     ax.grid(which = "major", axis='y', linestyle = '--')
     ax.grid(which = "both", axis='x', linestyle = '--')
     
-    if PE_ctrl.get() == 1:
+    if PE_ctrl.get() == 1:                  #on recupere les variables de controle et on fait les plots en conséquences
         ax.plot(Energie,Photoel,label="Effet photoélectrique")
         
     if Comp_ctrl.get() == 1:
@@ -78,7 +78,6 @@ def effacer():
 
 #création d'une fenêtre tkinter
 fenetre = Tk()
-#fenetre.geometry("800x500")
 
 #Titre à la fenêtre
 fenetre.title("interactions photon-matière")
@@ -116,4 +115,3 @@ canvas.grid(row=1, column=2, rowspan =4, padx =10, pady =10)
 
 #Détection action souris/clavier
 fenetre.mainloop()
-
