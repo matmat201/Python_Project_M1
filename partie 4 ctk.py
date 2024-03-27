@@ -14,9 +14,9 @@ from CTkToolTip import CTkToolTip
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-import openpyxl as op
+import openpyxl as op #lecture de fichier excel
 
-import webbrowser
+import webbrowser #ouverture de lien internet dans le navigateur
 
 ##############################################################################
 # Fonctions pour convertir les valeurs du curseur en valeurs réelles
@@ -53,7 +53,7 @@ def choix_mat_fct(event):
 def recup_data():
     # Lecture des datas
     book = op.load_workbook('bdd_photons_all_datas.xlsx')
-    sheet = book.get_sheet_by_name(mat_choisi)
+    sheet = book[mat_choisi]
 
     global Energie
     global Diff_ela
@@ -92,14 +92,13 @@ def trace():
     fig.clear() #On efface la zone graphique
     fig.canvas.draw() #On efface le canvas vide
     ax = fig.add_subplot(1,1,1) #graphe pleine page du canvas    
-    ax.legend()
     ax.set_title(f"Evolution coeff atténuation massique pour {mat_choisi}")
     ax.set_xlabel("Energie")
     ax.set_ylabel("tau(cm2/g)")
     ax.set_xscale('log')
     ax.set_yscale('log')
     
-    if control_modif_nrj == 0:
+    if control_modif_nrj == 0:    #on teste la valeur de la variable de controle pour ajuster l'echelle en fonction
         ax.set_xlim(scale_to_realmin(curseur_nrj_min.get()),scale_to_realmax(curseur_nrj_max.get()))
     elif control_modif_nrj == 1:
         ax.set_xlim(float(val_manu_min_nrj.get()),float(val_manu_max_nrj.get()))
@@ -231,7 +230,7 @@ def Documentation():
         "Pour plus d'informations sur le fonctionnement du programme, veuillez vous référer aux liens donnés en crédits"
     )
     Doc.insert("0.0", documentation_content)
-    Doc.configure(state="disabled")
+    Doc.configure(state="disabled") #on empeche l'utilisateur de modifier le texte
     
 ##############################################################################
 def Val_Tau():
@@ -268,13 +267,13 @@ def Val_Tau():
 ##############################################################################
 def extraction():
     book = op.load_workbook('bdd_photons_all_datas.xlsx')
-    sheet = book.get_sheet_by_name(mat_choisi)
+    sheet = book[mat_choisi]
     
     energie_entree = float(energie.get())
     
-    # Initialisation de la valeur de l'énergie la plus proche et de sa différence minimale
+    # Initialisation de la valeur de l'énergie la plus proche et de la différence minimale
     energie_proche = None
-    difference_min = float('inf')
+    difference_min = float('inf') #on initialise a l'infini comme ça toutes les
     
     for i in range(4, sheet.max_row + 1):
         valeur_energie = float(sheet.cell(row=i, column=1).value)
@@ -287,14 +286,14 @@ def extraction():
             tau.set("{:.3e}".format(float(sheet.cell(row=i, column=indice).value)))
 
     book.save('bdd_photons_all_datas.xlsx')
-    print(type_inter,energie_entree,energie_proche, tau.get())
+    print(type_inter,energie_entree,energie_proche, tau.get()) #verification
     
 ##############################################################################
 def select_inter(inter):
     global type_inter
     type_inter = inter
     global indice
-    indice = list_interaction.index(inter) + 2
+    indice = list_interaction.index(inter) + 2 #on rajoute 2 car la premiere interaction correspond a la deuxieme colonne dans le excel
     
 ##############################################################################
 def Selection_radioButton():
@@ -322,8 +321,8 @@ def change_mode_apparence(event):
     
 def change_zoom(event):
     zoom = Zoom_menu.get()
-    zoom = int(zoom.replace("%",""))/100
-    set_widget_scaling(zoom)
+    zoom = int(zoom.replace("%",""))/100 #set_widget_scaling a besoin d'une valeur entre 0 et 1, on utilise replace pour enlever le %
+    set_widget_scaling(zoom)             #puis on divise par 100
     
 ##############################################################################
 def section_eff():
@@ -465,8 +464,8 @@ def Conversion():
     global ctrl_conv
     
     if ctrl_conv == 0:
-        Diff_ela = [val_tau * rho[mat_choisi] for val_tau in Diff_ela]
-        Diff_c = [val_tau * rho[mat_choisi] for val_tau in Diff_c]
+        Diff_ela = [val_tau * rho[mat_choisi] for val_tau in Diff_ela] #on modifie la liste par comprehension
+        Diff_c = [val_tau * rho[mat_choisi] for val_tau in Diff_c]     #avec une variable anonyme qu'on itère sur la liste
         Photoel = [val_tau * rho[mat_choisi] for val_tau in Photoel]
         CP_nuc = [val_tau * rho[mat_choisi] for val_tau in CP_nuc]
         CP_el = [val_tau * rho[mat_choisi] for val_tau in CP_el]
@@ -504,8 +503,8 @@ def credit():
     CTkLabel(fen_cred, text="Thank you for using my little app").grid(row=4,padx=5, pady=5)
     progressbar_1 = CTkProgressBar(fen_cred)
     progressbar_1.grid(row=5, column=0, padx=(20, 10), pady=(10, 10), sticky="ew")
-    progressbar_1.configure(mode="indeterminnate")
-    progressbar_1.start()
+    progressbar_1.configure(mode="indeterminnate") #fait en sorte que la barre de progression alterne de gauche a droite
+    progressbar_1.start() #lance la progression de la barre
     
 
 def ouvre_lien(event):
@@ -690,7 +689,7 @@ Tabview_fonc.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
 Aide_B = CTkButton(Tabview_fonc.tab("Fonction Part 4"), text="Aide",command=Documentation).grid(row=1,pady=5,padx=(40,0))
 Coef_B = CTkButton(Tabview_fonc.tab("Fonction Part 4"), text="Extraction Tau",command=Val_Tau).grid(row=2,pady=5,padx=(40,0))
 Section_B = CTkButton(Tabview_fonc.tab("Fonction Part 4"), text="Calcul Section Efficace",command=section_eff).grid(row=3,pady=5,padx=(40,0))
-Unite_B = CTkButton(Tabview_fonc.tab("Fonction Part 4"), text="Changement unitée",command=Conversion)
+Unite_B = CTkButton(Tabview_fonc.tab("Fonction Part 4"), text="Changement unité",command=Conversion)
 Unite_B.grid(row=4,pady=5,padx=(40,0))
 Save_B = CTkButton(Tabview_fonc.tab("Fonction Part 4"), text="Sauvegarde Externe",command=fenetre_donnees).grid(row=5,pady=5,padx=(40,0))
 
